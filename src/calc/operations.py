@@ -34,6 +34,8 @@ def power(base: float, exponent: int) -> float:
     for _ in range(abs(exponent)):
         result *= base
     return result if exponent >= 0 else 1 / result
+
+
 def factorial(n: int) -> int:
     """Вычисляет факториал неотрицательного целого числа."""
     if not isinstance(n, int) or n < 0:
