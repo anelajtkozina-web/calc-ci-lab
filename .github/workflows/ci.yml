@@ -1,8 +1,6 @@
 # Workflow GitHub Actions для ЛПР 12.
-# Файл обязан лежать в каталоге .github/workflows/ репозитория.
 name: CI
 
-# Событие-триггер: любой push в любую ветку, pull request в main и ручной запуск.
 on:
   push:
   pull_request:
@@ -10,7 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ---------- Этап 1. Статическая проверка кода ----------
   lint:
     name: Проверка кода (flake8)
     runs-on: ubuntu-latest
@@ -19,12 +16,12 @@ jobs:
         python-version: ["3.11", "3.12"]
     steps:
       - name: Получить исходный код
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Установить Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}.
+          python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: requirements-dev.txt
 
@@ -34,18 +31,17 @@ jobs:
       - name: Запустить flake8
         run: flake8 src tests
 
-  # ---------- Этап 2. Автоматические тесты ----------
   test:
     name: Тесты (pytest)
     runs-on: ubuntu-latest
+    needs: lint
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
-    needs: lint          # запускается только после успешного lint
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -57,26 +53,25 @@ jobs:
         run: pytest -v --junitxml=report.xml
 
       - name: Сохранить отчёт о тестах
-        uses: actions/upload-artifact@v7
-        if: always()          # отчёт нужен и при провале тестов
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: test-report
+          name: test-report-${{ matrix.python-version }}
           path: report.xml
 
-  # ---------- Этап 3. Сборка пакета ----------
   build:
     name: Сборка пакета
     runs-on: ubuntu-latest
+    needs: test
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
-    needs: test
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@v5
         with:
-         python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Собрать wheel и sdist
         run: |
@@ -89,7 +84,7 @@ jobs:
           calc add 2 3
 
       - name: Сохранить артефакт сборки
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: dist-${{ matrix.python-version }}
           path: dist/
